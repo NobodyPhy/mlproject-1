@@ -18,7 +18,7 @@ from src.utils import save_object
 
 @dataclass
 class DataTransformationConfig:
-    preprocessor_object_filepath = os.path.join('artifacts', 'preprocessor.pkl')
+    preprocessor_object_filepath: str = os.path.join('artifacts', 'preprocessor.pkl')
 
 class DataTransformation:
     def __init__(self):
@@ -26,7 +26,7 @@ class DataTransformation:
 
     def get_data_transformer_object(self):
         '''
-        This function is responsible for data transformation
+        This function is responsible for giving the data transformation object
         '''
         try:
             numerical_columns = ['writing score', 'reading score']
@@ -65,9 +65,7 @@ class DataTransformation:
                 ]
             )
 
-            logging.info("Numerical columns standard scaling completed")
-            logging.info("Categorical columns encoding completed")
-
+            logging.info("Column Transformer (preprocessor) created")
             return preprocessor
 
         except Exception as e:
@@ -75,12 +73,15 @@ class DataTransformation:
 
 
     def initiate_data_transformation(self, train_path, test_path):
+        '''
+        Performs the data transformation
+        '''
         try:
             train_df = pd.read_csv(train_path)
             test_df = pd.read_csv(test_path)
 
             logging.info("Reading of train and test data completed")
-            logging.info("Obtaining preprocessing object")
+            logging.info("Obtaining preprocessor object")
 
             preprocessor_object = self.get_data_transformer_object()
             target_column_name = 'math score'
@@ -91,7 +92,7 @@ class DataTransformation:
             input_feature_test_df = test_df.drop(columns=[target_column_name], axis=1)
             target_feature_test_df = test_df[target_column_name]
 
-            logging.info("Applying preprocessing object on training dataframe and testing dataframe")
+            logging.info("Applying preprocessor object on training and testing dataframe")
 
             input_features_train_array = preprocessor_object.fit_transform(input_feature_train_df)
             input_features_test_array = preprocessor_object.transform(input_feature_test_df)
@@ -99,7 +100,9 @@ class DataTransformation:
             train_array = np.c_[input_features_train_array, np.array(target_feature_train_df)]
             test_array = np.c_[input_features_test_array, np.array(target_feature_test_df)]
 
-            logging.info("Saved preprocessing object")
+            
+            logging.info("Data transformation DONE")
+            logging.info("Saving preprocessor object")
 
             save_object(
                 file_path = self.data_transformation_config.preprocessor_object_filepath,
